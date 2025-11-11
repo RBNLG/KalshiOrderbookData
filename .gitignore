@@ -1,0 +1,15 @@
+.env
+newKey.txt
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+*.db
+*.sqlite
+*.sqlite3
+newt.py
+.DS_Store
