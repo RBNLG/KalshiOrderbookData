@@ -85,6 +85,42 @@ This will display:
 - Breakdown by ticker
 - Sample records
 
+## Data Analysis
+
+The project includes two powerful analysis scripts to visualize market dynamics.
+
+### Slippage & Markout Analysis
+
+Analyze trade execution quality, slippage costs, and price impact (markouts) over time.
+
+```bash
+# Analyze a specific market
+python analyze_slippage.py KXNFLGAME-25NOV09BUFMIA-BUF
+
+# Analyze multiple markets using a wildcard pattern
+python analyze_slippage.py "KXNFLGAME*"
+```
+
+**Outputs** (saved in `slippage/<ticker>/`):
+- `slippage_dist.png`: Histogram of execution slippage (cost to cross the spread).
+- `markout_curve_by_trade.png`: Average PnL of trades after N seconds (unweighted).
+- `markout_curve_by_volume.png`: Volume-weighted average PnL of trades after N seconds.
+- `markout_curve_hourly_*.png`: Hourly breakdown of markouts.
+- `slippage_hourly.png`: Total slippage cost paid by hour.
+
+### Imbalance Analysis
+
+Analyze the net volume flow (YES vs NO contracts) for a market, automatically aggregating data from its linked opposing market (e.g., the other side of a sports game).
+
+```bash
+# Analyze a market (automatically finds and includes the linked market)
+python analyze_imbalance.py KXNFLGAME-25NOV23CLELV-CLE
+```
+
+**Outputs** (saved in `imbalance/<ticker>/`):
+- `cumulative_imbalance.png`: Cumulative net volume (YES - NO) over time.
+- `net_volume_flow.png`: Net volume flow in 5-minute intervals.
+
 ## How It Works
 
 1. **Market Discovery**: The application uses the REST API to fetch all market tickers for the provided event ticker(s)
@@ -152,6 +188,8 @@ db.close()
 ```
 KalshiOrderbookData/
 ├── kalshi_database.py      # Main application (database class and WebSocket client)
+├── analyze_slippage.py     # Slippage and markout analysis script
+├── analyze_imbalance.py    # Market imbalance analysis script
 ├── verify_database.py      # Database verification utility
 ├── requirements.txt        # Python dependencies
 ├── README.md              # This file
