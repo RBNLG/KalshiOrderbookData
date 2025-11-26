@@ -237,6 +237,10 @@ class MyClient(kalshi.websocket.Client):
             status = msg_data.get("event_type") or msg_data.get("status")
             
             if ticker and status:
+                # Ignore updates for markets we aren't tracking
+                if ticker not in self.active_markets and ticker not in self.determined_markets:
+                    return
+
                 if status in ["closed", "settled", "determined", "deactivated"] and ticker not in self.determined_markets:
                     self.determined_markets.add(ticker)
                     self.active_markets.discard(ticker)
