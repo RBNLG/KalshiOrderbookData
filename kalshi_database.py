@@ -233,10 +233,11 @@ class MyClient(kalshi.websocket.Client):
         # Handle market_lifecycle_v2 messages to detect when markets determine
         if msg_type == "market_lifecycle_v2":
             ticker = msg_data.get("market_ticker")
-            status = msg_data.get("status")
+            # API docs say 'event_type', but we'll check both to be safe
+            status = msg_data.get("event_type") or msg_data.get("status")
             
             if ticker and status:
-                if status in ["closed", "settled"] and ticker not in self.determined_markets:
+                if status in ["closed", "settled", "determined", "deactivated"] and ticker not in self.determined_markets:
                     self.determined_markets.add(ticker)
                     self.active_markets.discard(ticker)
                     print(f"🏁 Market DETERMINED: {ticker} | Status: {status}")

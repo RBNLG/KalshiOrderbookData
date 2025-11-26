@@ -13,3 +13,5 @@ ENV/
 *.sqlite3
 newt.py
 .DS_Store
+slippage/
+imbalance/
