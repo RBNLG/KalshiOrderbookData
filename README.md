@@ -121,6 +121,19 @@ python analyze_imbalance.py KXNFLGAME-25NOV23CLELV-CLE
 - `cumulative_imbalance.png`: Cumulative net volume (YES - NO) over time.
 - `net_volume_flow.png`: Net volume flow in 5-minute intervals.
 
+### Imbalance Predictability Analysis
+
+Test the hypothesis that orderbook imbalances predict future mid-price moves. This script calculates correlations between current orderbook imbalance and future price returns across multiple time horizons.
+
+```bash
+# Analyze predictability for a specific market
+python imbalance_predictability.py KXNFLGAME-25NOV27GBDET
+```
+
+**Outputs** (saved in `alpha_research/ob_imbalance/results/<ticker>/`):
+- `imbalance_scatter_<horizon>s.png`: Scatter plots showing the relationship between imbalance and future returns for 1s, 5s, 30s, 60s, 120s, and 300s horizons.
+- `imbalance_correlations.png`: Bar chart summarizing the Pearson correlation for each time horizon.
+
 ## How It Works
 
 1. **Market Discovery**: The application uses the REST API to fetch all market tickers for the provided event ticker(s)
@@ -190,6 +203,7 @@ KalshiOrderbookData/
 ├── kalshi_database.py      # Main application (database class and WebSocket client)
 ├── analyze_slippage.py     # Slippage and markout analysis script
 ├── analyze_imbalance.py    # Market imbalance analysis script
+├── imbalance_predictability.py # Orderbook imbalance predictability analysis
 ├── verify_database.py      # Database verification utility
 ├── requirements.txt        # Python dependencies
 ├── README.md              # This file
