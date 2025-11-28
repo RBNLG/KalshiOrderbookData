@@ -57,6 +57,24 @@ class OrderbookDatabase:
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Markets table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS markets (
+                ticker TEXT PRIMARY KEY,
+                event_ticker TEXT,
+                market_type TEXT,
+                title TEXT,
+                subtitle TEXT,
+                open_time INTEGER,
+                close_time INTEGER,
+                expiration_time INTEGER,
+                expected_expiration_time INTEGER,
+                status TEXT,
+                data TEXT,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         
         # Create indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_trades_ticker_ts ON trades(ticker, timestamp)")
@@ -80,6 +98,48 @@ class OrderbookDatabase:
             "INSERT INTO orderbook_snapshots (timestamp, ticker, snapshot_data) VALUES (?, ?, ?)",
             (timestamp, ticker, json.dumps(snapshot))
         )
+        self.conn.commit()
+
+    def store_market(self, market_data: dict):
+        """Store or update market metadata"""
+        cursor = self.conn.cursor()
+        
+        # Extract fields
+        ticker = market_data.get("ticker")
+        if not ticker:
+            return
+            
+        event_ticker = market_data.get("event_ticker")
+        market_type = market_data.get("market_type")
+        title = market_data.get("title")
+        subtitle = market_data.get("subtitle")
+        status = market_data.get("status")
+        
+        # Helper to parse ISO time to timestamp
+        def parse_time(ts_str):
+            if not ts_str: return None
+            try:
+                dt = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+                return int(dt.timestamp())
+            except:
+                return None
+
+        open_time = parse_time(market_data.get("open_time"))
+        close_time = parse_time(market_data.get("close_time"))
+        expiration_time = parse_time(market_data.get("expiration_time"))
+        expected_expiration_time = parse_time(market_data.get("expected_expiration_time"))
+        
+        cursor.execute("""
+            INSERT OR REPLACE INTO markets (
+                ticker, event_ticker, market_type, title, subtitle,
+                open_time, close_time, expiration_time, expected_expiration_time,
+                status, data, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """, (
+            ticker, event_ticker, market_type, title, subtitle,
+            open_time, close_time, expiration_time, expected_expiration_time,
+            status, json.dumps(market_data)
+        ))
         self.conn.commit()
     
     def initialize_orderbook_from_snapshot(self, ticker: str, snapshot_msg: dict):
@@ -336,12 +396,14 @@ class MyClient(kalshi.websocket.Client):
         await super().on_close(close_status_code, close_msg)
 
 
-def fetch_markets_for_event_tickers(event_tickers: List[str]) -> List[str]:
+def fetch_markets_for_event_tickers(event_tickers: List[str], db: OrderbookDatabase = None) -> List[str]:
     """
     Fetch all market tickers for the given event ticker(s) using the REST API.
+    Optionally store market metadata in the database.
     
     Args:
         event_tickers: List of event ticker strings
+        db: Optional OrderbookDatabase instance to store market metadata
         
     Returns:
         List of market ticker strings
@@ -356,7 +418,14 @@ def fetch_markets_for_event_tickers(event_tickers: List[str]) -> List[str]:
             
             if "markets" in response:
                 markets = response["markets"]
-                market_tickers = [m.get("ticker") for m in markets if m.get("ticker")]
+                market_tickers = []
+                for m in markets:
+                    ticker = m.get("ticker")
+                    if ticker:
+                        market_tickers.append(ticker)
+                        if db:
+                            db.store_market(m)
+                
                 all_market_tickers.extend(market_tickers)
                 print(f"   Found {len(market_tickers)} markets for {event_ticker}")
             else:
@@ -370,7 +439,14 @@ def fetch_markets_for_event_tickers(event_tickers: List[str]) -> List[str]:
                 response = market.GetMarkets(event_ticker=event_ticker, limit=1000, cursor=cursor)
                 if "markets" in response:
                     markets = response["markets"]
-                    market_tickers = [m.get("ticker") for m in markets if m.get("ticker")]
+                    market_tickers = []
+                    for m in markets:
+                        ticker = m.get("ticker")
+                        if ticker:
+                            market_tickers.append(ticker)
+                            if db:
+                                db.store_market(m)
+                                
                     all_market_tickers.extend(market_tickers)
                     print(f"   Found {len(market_tickers)} more markets (total: {len(all_market_tickers)})")
                 cursor = response.get("cursor")
@@ -407,8 +483,10 @@ if __name__ == "__main__":
     print(f"📋 Event ticker(s): {', '.join(event_tickers)}")
     print()
     
+    db = OrderbookDatabase("kalshi_data.db")
+    
     # Fetch markets for the event ticker(s)
-    market_tickers = fetch_markets_for_event_tickers(event_tickers)
+    market_tickers = fetch_markets_for_event_tickers(event_tickers, db=db)
     
     if not market_tickers:
         print("❌ No markets found for the given event ticker(s). Exiting.")
@@ -417,7 +495,6 @@ if __name__ == "__main__":
     print(f"\n✅ Found {len(market_tickers)} total markets")
     print(f"📊 Market tickers: {', '.join(market_tickers[:10])}{'...' if len(market_tickers) > 10 else ''}\n")
     
-    db = OrderbookDatabase("kalshi_data.db")
     ws_client = MyClient(db, market_tickers, debug=args.debug)
     
     try:
