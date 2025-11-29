@@ -85,54 +85,6 @@ This will display:
 - Breakdown by ticker
 - Sample records
 
-## Data Analysis
-
-The project includes two powerful analysis scripts to visualize market dynamics.
-
-### Slippage & Markout Analysis
-
-Analyze trade execution quality, slippage costs, and price impact (markouts) over time.
-
-```bash
-# Analyze a specific market
-python analyze_slippage.py KXNFLGAME-25NOV09BUFMIA-BUF
-
-# Analyze multiple markets using a wildcard pattern
-python analyze_slippage.py "KXNFLGAME*"
-```
-
-**Outputs** (saved in `slippage/<ticker>/`):
-- `slippage_dist.png`: Histogram of execution slippage (cost to cross the spread).
-- `markout_curve_by_trade.png`: Average PnL of trades after N seconds (unweighted).
-- `markout_curve_by_volume.png`: Volume-weighted average PnL of trades after N seconds.
-- `markout_curve_hourly_*.png`: Hourly breakdown of markouts.
-- `slippage_hourly.png`: Total slippage cost paid by hour.
-
-### Imbalance Analysis
-
-Analyze the net volume flow (YES vs NO contracts) for a market, automatically aggregating data from its linked opposing market (e.g., the other side of a sports game).
-
-```bash
-# Analyze a market (automatically finds and includes the linked market)
-python analyze_imbalance.py KXNFLGAME-25NOV23CLELV-CLE
-```
-
-**Outputs** (saved in `imbalance/<ticker>/`):
-- `cumulative_imbalance.png`: Cumulative net volume (YES - NO) over time.
-- `net_volume_flow.png`: Net volume flow in 5-minute intervals.
-
-### Imbalance Predictability Analysis
-
-Test the hypothesis that orderbook imbalances predict future mid-price moves. This script calculates correlations between current orderbook imbalance and future price returns across multiple time horizons.
-
-```bash
-# Analyze predictability for a specific market
-python imbalance_predictability.py KXNFLGAME-25NOV27GBDET
-```
-
-**Outputs** (saved in `alpha_research/ob_imbalance/results/<ticker>/`):
-- `imbalance_scatter_<horizon>s.png`: Scatter plots showing the relationship between imbalance and future returns for 1s, 5s, 30s, 60s, 120s, and 300s horizons.
-- `imbalance_correlations.png`: Bar chart summarizing the Pearson correlation for each time horizon.
 
 ## How It Works
 
@@ -195,6 +147,55 @@ snapshots_df = db.get_orderbook_snapshots_df(ticker="KXNCAAMBGAME-25NOV11LIUAFA-
 
 db.close()
 ```
+
+## Data Analysis
+
+The project includes several powerful analysis scripts to visualize market dynamics.
+
+### Slippage & Markout Analysis
+
+Analyze trade execution quality, slippage costs, and price impact (markouts) over time.
+
+```bash
+# Analyze a specific market
+python analyze_slippage.py KXNFLGAME-25NOV09BUFMIA-BUF
+
+# Analyze multiple markets using a wildcard pattern
+python analyze_slippage.py "KXNFLGAME*"
+```
+
+**Outputs** (saved in `slippage/<ticker>/`):
+- `slippage_dist.png`: Histogram of execution slippage (cost to cross the spread).
+- `markout_curve_by_trade.png`: Average PnL of trades after N seconds (unweighted).
+- `markout_curve_by_volume.png`: Volume-weighted average PnL of trades after N seconds.
+- `markout_curve_hourly_*.png`: Hourly breakdown of markouts.
+- `slippage_hourly.png`: Total slippage cost paid by hour.
+
+### Imbalance Analysis
+
+Analyze the net volume flow (YES vs NO contracts) for a market, automatically aggregating data from its linked opposing market (e.g., the other side of a sports game).
+
+```bash
+# Analyze a market (automatically finds and includes the linked market)
+python analyze_imbalance.py KXNFLGAME-25NOV23CLELV-CLE
+```
+
+**Outputs** (saved in `imbalance/<ticker>/`):
+- `cumulative_imbalance.png`: Cumulative net volume (YES - NO) over time.
+- `net_volume_flow.png`: Net volume flow in 5-minute intervals.
+
+### Imbalance Predictability Analysis
+
+Test the hypothesis that orderbook imbalances predict future mid-price moves. This script calculates correlations between current orderbook imbalance and future price returns across multiple time horizons.
+
+```bash
+# Analyze predictability for a specific market
+python imbalance_predictability.py KXNFLGAME-25NOV27GBDET
+```
+
+**Outputs** (saved in `alpha_research/ob_imbalance/results/<ticker>/`):
+- `imbalance_scatter_<horizon>s.png`: Scatter plots showing the relationship between imbalance and future returns for 1s, 5s, 30s, 60s, 120s, and 300s horizons.
+- `imbalance_correlations.png`: Bar chart summarizing the Pearson correlation for each time horizon.
 
 ## Project Structure
 
